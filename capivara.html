@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Capivara no Capibaribe</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: sans-serif;
+        }
+        #gameCanvas {
+            background-color: #87CEEB;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        #instrucoes {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="instrucoes">
+        Controles:<br>
+        [↑] ou [E] - Andar<br>
+        [Q] - Comer (Crescer)<br>
+        [W] - Fazer cocô (Diminuir)<br>
+        [R] - Resetar tela
+    </div>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function atualizar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            requestAnimationFrame(atualizar);
+        }
+
+        atualizar();
+    </script>
+</body>
+</html>
