@@ -43,9 +43,39 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+    
+        function desenharCenario() {
+            // Céu 
+            ctx.fillStyle = '#329dc8';
+            ctx.fillRect(0, 0, 800, 300);
+
+            // Prédios ao fundo
+            ctx.fillStyle = '#8a949b';
+            ctx.fillRect(100, 150, 80, 150);
+            ctx.fillRect(600, 100, 100, 200);
+
+            // Casarões coloridos
+            ctx.fillStyle = '#e5c07b'; // Amarelo
+            ctx.fillRect(50, 220, 90, 80);
+            ctx.fillStyle = '#e06c75'; // Rosa
+            ctx.fillRect(140, 230, 90, 70);
+            ctx.fillStyle = '#61afef'; // Azul
+            ctx.fillRect(230, 210, 100, 90);
+            ctx.fillStyle = '#98c379'; // Verde
+            ctx.fillRect(330, 230, 90, 70);
+
+            // Grama 
+            ctx.fillStyle = '#3a5f0b';
+            ctx.fillRect(0, 300, 800, 300);
+
+            // Rio
+            ctx.fillStyle = '#2c3e50';
+            ctx.fillRect(0, 320, 800, 150);
+        }
 
         function atualizar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            desenharCenario();
             requestAnimationFrame(atualizar);
         }
 
