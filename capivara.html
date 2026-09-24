@@ -46,6 +46,7 @@
         let tempo = 0;
         let comidas = [];
         let comendo = false;
+        let cocos = [];
         
         window.addEventListener('keydown', (e) => teclas[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
@@ -59,6 +60,18 @@
                 
                 // Cresce limitando a um tamanho máximo
                 if(capivara.escala < 2.5) capivara.escala += 0.1;
+            }
+
+            if (key === 'w') {
+                // Gera cocô atrás da capivara
+                cocos.push({ 
+                    x: capivara.x - (70 * capivara.escala), 
+                    y: capivara.y - (30 * capivara.escala),
+                    caindo: true
+                });
+                
+                // Diminui limitando a um tamanho mínimo
+                if(capivara.escala > 0.5) capivara.escala -= 0.1;
             }
         });
 
@@ -151,6 +164,19 @@
             comidas.forEach(c => {
                 ctx.fillStyle = 'lightgreen';
                 ctx.fillRect(c.x, c.y - 15, 15, 15);
+            });
+
+            cocos.forEach(c => {
+                if (c.caindo) {
+                    c.y += 2;
+                    c.x -= 0.5; // Cai levemente para trás
+                    if (c.y >= capivara.y) {
+                        c.y = capivara.y;
+                        c.caindo = false;
+                    }
+                }
+                ctx.fillStyle = '#3e2723';
+                ctx.fillRect(c.x, c.y - 10, 10, 10);
             });
         }
 
