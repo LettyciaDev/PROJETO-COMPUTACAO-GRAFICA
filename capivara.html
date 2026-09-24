@@ -27,40 +27,24 @@
             padding: 10px;
             border-radius: 5px;
             pointer-events: none;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
     <div id="instrucoes">
-        Controles:<br>
+        <strong>Controles:</strong><br>
         [↑] ou [E] - Andar<br>
         [Q] - Comer (Crescer)<br>
         [W] - Fazer cocô (Diminuir)<br>
-        [R] - Resetar tela
+        [R] - Limpar e Resetar
     </div>
+    
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
-        let teclas = {};
-        let andando = false;
-        let tempo = 0;
-        let comidas = [];
-        let comendo = false;
-        
-        window.addEventListener('keydown', (e) => teclas[e.key.toLowerCase()] = true);
-        window.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
-        window.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            if (key === 'q' && !andando) {
-                // Gera comida na frente da capivara
-                comidas.push({ x: capivara.x + (80 * capivara.escala), y: capivara.y });
-                comendo = true;
-                setTimeout(() => comendo = false, 300);
-                
-                // Cresce limitando a um tamanho máximo
-                if(capivara.escala < 2.5) capivara.escala += 0.1;
-            }
-        });
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
 
         let capivara = {
             x: 400,
@@ -70,22 +54,57 @@
             abaixarCabeca: 0
         };
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        let teclas = {};
+        let andando = false;
+        let tempo = 0;
+        let comidas = [];
+        let cocos = [];
+        let comendo = false;
 
+        window.addEventListener('keydown', (e) => teclas[e.key.toLowerCase()] = true);
+        window.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
 
-    
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            
+            if (key === 'q' && !andando) {
+
+                comidas.push({ x: capivara.x + (80 * capivara.escala), y: capivara.y });
+                comendo = true;
+                setTimeout(() => comendo = false, 300);
+                
+                if (capivara.escala < 2.5) capivara.escala += 0.1;
+            }
+            
+            if (key === 'w') {
+
+                cocos.push({ 
+                    x: capivara.x - (70 * capivara.escala), 
+                    y: capivara.y - (30 * capivara.escala),
+                    caindo: true
+                });
+                
+                if (capivara.escala > 0.5) capivara.escala -= 0.1;
+            }
+
+            if (key === 'r') {
+
+                capivara.escala = 1;
+                capivara.x = 400;
+                comidas = [];
+                cocos = [];
+            }
+        });
+
         function desenharCenario() {
-            // Céu 
-            ctx.fillStyle = '#329dc8';
+
+            ctx.fillStyle = '#6b7a8f';
             ctx.fillRect(0, 0, 800, 300);
 
-            // Prédios ao fundo
             ctx.fillStyle = '#8a949b';
             ctx.fillRect(100, 150, 80, 150);
             ctx.fillRect(600, 100, 100, 200);
 
-            // Casarões coloridos
             ctx.fillStyle = '#e5c07b'; // Amarelo
             ctx.fillRect(50, 220, 90, 80);
             ctx.fillStyle = '#e06c75'; // Rosa
@@ -94,76 +113,100 @@
             ctx.fillRect(230, 210, 100, 90);
             ctx.fillStyle = '#98c379'; // Verde
             ctx.fillRect(330, 230, 90, 70);
+            ctx.fillStyle = '#e5c07b'; // Amarelo
+            ctx.fillRect(420, 220, 90, 80);
 
-            // Grama 
             ctx.fillStyle = '#3a5f0b';
             ctx.fillRect(0, 300, 800, 300);
 
-            // Rio
             ctx.fillStyle = '#2c3e50';
             ctx.fillRect(0, 320, 800, 150);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.fillRect(0, 0, 800, 600);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.fillRect(0, 0, 800, 600);
+        }
+
+        function desenharItens() {
+
+            ctx.fillStyle = '#a8e6cf';
+            comidas.forEach(c => {
+                ctx.fillRect(c.x, c.y - 15, 15, 15);
+            });
+
+            ctx.fillStyle = '#3e2723';
+            cocos.forEach(c => {
+                if (c.caindo) {
+                    c.y += 2;
+                    c.x -= 0.5;
+                    if (c.y >= capivara.y) {
+                        c.y = capivara.y;
+                        c.caindo = false;
+                    }
+                }
+                ctx.fillRect(c.x, c.y - 10, 10, 10);
+            });
         }
 
         function desenharCapivara() {
             ctx.save();
             
             ctx.translate(capivara.x, capivara.y);
+            
             ctx.scale(capivara.escala, capivara.escala);
 
             const corCorpo = '#8b5a2b';
             const corEscura = '#5c3a18';
 
-            // Corpo (Centro ajustado para os pés ficarem no y=0)
+            // Corpo
             ctx.fillStyle = corCorpo;
             ctx.fillRect(-60, -70, 120, 60);
 
-            // Cabeça
+            // Cabeça (Translação + Rotação de Ponto Fixo)
             ctx.save();
-            ctx.translate(60, -60); 
-            ctx.rotate(capivara.abaixarCabeca); // Rotação da cabeça
+            ctx.translate(60, -60); // Ponto de articulação do pescoço
+            ctx.rotate(capivara.abaixarCabeca); // Gira a cabeça
+            
+            ctx.fillStyle = corCorpo;
             ctx.fillRect(-10, -20, 50, 40);
-            // Olho
-            ctx.fillStyle = 'black';
+            ctx.fillStyle = 'black'; // Olho
             ctx.fillRect(20, -10, 5, 5);
-            // Focinho
-            ctx.fillStyle = corEscura;
+            ctx.fillStyle = corEscura; // Focinho
             ctx.fillRect(30, 0, 10, 15);
+            
             ctx.restore();
 
-            // Perna Traseira (Rotação com ponto fixo)
+            // Perna Traseira (Translação + Rotação de Ponto Fixo)
             ctx.save();
-            ctx.translate(-35, -10); 
-            ctx.rotate(capivara.anguloPerna); // Op
-            ctx.fillStyle = corEscura;
-            ctx.fillRect(-5, 0, 10, 20); // Desenha a partir da articulação
-            ctx.restore(); 
-            
-            // Perna Dianteira
-            ctx.save();
-            ctx.translate(35, -10);
-            ctx.rotate(-capivara.anguloPerna); // Gira invertido
+            ctx.translate(-35, -10);
+            ctx.rotate(capivara.anguloPerna);
             ctx.fillStyle = corEscura;
             ctx.fillRect(-5, 0, 10, 20);
             ctx.restore();
-        }
 
-        function desenharItens() {
-            comidas.forEach(c => {
-                ctx.fillStyle = 'lightgreen';
-                ctx.fillRect(c.x, c.y - 15, 15, 15);
-            });
+            // Perna Dianteira (Movimento inverso)
+            ctx.save();
+            ctx.translate(35, -10); // Ponto de articulação (ombro)
+            ctx.rotate(-capivara.anguloPerna);
+            ctx.fillStyle = corEscura;
+            ctx.fillRect(-5, 0, 10, 20);
+            ctx.restore();
+
+            ctx.restore();
         }
 
         function atualizar() {
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
             desenharCenario();
-            desenharItens()
-            desenharCapivara();
+
             andando = false;
             if (teclas['arrowup'] || teclas['e']) {
                 capivara.x += 3;
                 andando = true;
-                // Loop de tela
+                
                 if (capivara.x > canvas.width + 100 * capivara.escala) {
                     capivara.x = -100;
                 }
@@ -177,10 +220,14 @@
             }
 
             if (comendo) {
-                capivara.abaixarCabeca = Math.PI / 4; // Rotaciona 45 graus pra baixo
+                capivara.abaixarCabeca = Math.PI / 4; // Desce 45 graus
             } else {
                 capivara.abaixarCabeca = 0;
             }
+
+            desenharItens();
+            desenharCapivara();
+
             requestAnimationFrame(atualizar);
         }
 
@@ -188,9 +235,3 @@
     </script>
 </body>
 </html>
-
-if (comendo) {
-        capivara.abaixarCabeca = Math.PI / 4; // Rotaciona 45 graus pra baixo
-    } else {
-        capivara.abaixarCabeca = 0;
-    }
