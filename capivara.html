@@ -7,223 +7,301 @@
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #222;
+            background-color: #1a1a24;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            color: white;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
         }
-        #gameCanvas {
-            background-color: #87CEEB;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        #gameContainer {
+            position: relative;
+            /* Configuração responsiva: ocupa 90% da altura da tela */
+            height: 90vh;
+            /* Mantém a exata proporção original para nada ficar achatado */
+            aspect-ratio: 8 / 5;
+            /* Limita pela largura caso a tela seja muito estreita */
+            max-width: 95vw;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #instrucoes {
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-color: #7b8b91; 
+            /* Garante que ao aumentar a tela, os blocos continuem nítidos */
+            image-rendering: pixelated;
+        }
+        #ui-panel {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
-            padding: 10px;
-            border-radius: 5px;
-            pointer-events: none;
+            top: 15px;
+            left: 15px;
+            background: rgba(30, 30, 30, 0.85);
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        #ui-panel h2 {
+            margin: 0 0 10px 0;
+            color: #FFA500;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .instruction {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        .key {
+            background: white;
+            color: black;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 8px;
+            min-width: 12px;
+            text-align: center;
+            font-family: monospace;
+            box-shadow: 0 2px 0 #ccc;
+            font-size: 10px;
         }
     </style>
 </head>
 <body>
-    <div id="instrucoes">
-        Controles:<br>
-        [↑] ou [E] - Andar<br>
-        [Q] - Comer (Crescer)<br>
-        [W] - Fazer cocô (Diminuir)<br>
-        [R] - Resetar tela
+
+<div id="gameContainer">
+    <div id="ui-panel">
+        <h2>Capivara em Recife</h2>
+        <div class="instruction"><span class="key">↑</span> Andar</div>
+        <div class="instruction"><span class="key">E</span> Andar Automático (Liga/Desliga)</div>
+        <div class="instruction"><span class="key">Q</span> Comer (Cresce)</div>
+        <div class="instruction"><span class="key">W</span> Fazer Cocô (Diminui)</div>
+        <div class="instruction"><span class="key">R</span> Limpar Tudo & Resetar Escala</div>
     </div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <!-- A resolução interna continua 800x500 para a matemática das transformações funcionar perfeitamente, o CSS cuida de esticar visualmente -->
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+</div>
 
-    <script>
-        let teclas = {};
-        let andando = false;
-        let tempo = 0;
-        let comidas = [];
-        let comendo = false;
-        let cocos = [];
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    let capivara = {
+        x: 300,
+        y: 400,
+        escala: 1,
+        anguloPerna: 0,
+        abaixarCabeca: 0
+    };
+
+    let teclas = {};
+    let andarAutomatico = false;
+    let tempo = 0;
+    let comidas = [];
+    let cocos = [];
+    let comendo = false;
+
+    window.addEventListener('keydown', (e) => {
+        teclas[e.code] = true;
+
+        if (e.code === 'KeyE') {
+            andarAutomatico = !andarAutomatico;
+        }
         
-        window.addEventListener('keydown', (e) => teclas[e.key.toLowerCase()] = true);
-        window.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
-        window.addEventListener('keydown', (e) => {
-            const key = e.key.toLowerCase();
-            if (key === 'q' && !andando) {
-                // Gera comida na frente da capivara
-                comidas.push({ x: capivara.x + (80 * capivara.escala), y: capivara.y });
-                comendo = true;
-                setTimeout(() => comendo = false, 300);
-                
-                // Cresce limitando a um tamanho máximo
-                if(capivara.escala < 2.5) capivara.escala += 0.1;
-            }
+        if (e.code === 'KeyQ' && !teclas['ArrowUp'] && !andarAutomatico) {
+            comidas.push({ x: capivara.x + (120 * capivara.escala), y: capivara.y + (40 * capivara.escala) });
+            comendo = true;
+            setTimeout(() => comendo = false, 300);
+            if (capivara.escala < 2.5) capivara.escala += 0.15;
+        }
+        
+        if (e.code === 'KeyW') {
+            cocos.push({ 
+                x: capivara.x - (90 * capivara.escala), 
+                y: capivara.y + (20 * capivara.escala),
+                caindo: true
+            });
+            if (capivara.escala > 0.5) capivara.escala -= 0.15;
+        }
 
-            if (key === 'w') {
-                // Gera cocô atrás da capivara
-                cocos.push({ 
-                    x: capivara.x - (70 * capivara.escala), 
-                    y: capivara.y - (30 * capivara.escala),
-                    caindo: true
-                });
-                
-                // Diminui limitando a um tamanho mínimo
-                if(capivara.escala > 0.5) capivara.escala -= 0.1;
+        if (e.code === 'KeyR') {
+            capivara.escala = 1;
+            capivara.x = 300;
+            andarAutomatico = false;
+            comidas = [];
+            cocos = [];
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        teclas[e.code] = false;
+    });
+
+    function desenharCasa(x, y, cor) {
+        ctx.fillStyle = cor;
+        ctx.fillRect(x, y, 110, 90);
+        
+        ctx.fillStyle = '#83523d'; 
+        ctx.beginPath();
+        ctx.moveTo(x - 10, y);
+        ctx.lineTo(x + 55, y - 35);
+        ctx.lineTo(x + 120, y);
+        ctx.fill();
+
+        ctx.fillStyle = '#4a4a4a';
+        ctx.fillRect(x + 15, y + 15, 18, 20);
+        ctx.fillRect(x + 46, y + 15, 18, 20);
+        ctx.fillRect(x + 77, y + 15, 18, 20);
+
+        ctx.fillRect(x + 20, y + 50, 25, 40);
+        ctx.fillRect(x + 65, y + 50, 25, 40);
+    }
+
+    function desenharPredio(x, y, w, h, cor, janelas = false) {
+        ctx.fillStyle = cor;
+        ctx.fillRect(x, y, w, h);
+        if (janelas) {
+            ctx.fillStyle = '#cfd6d8';
+            for (let i = 10; i < h - 10; i += 15) {
+                ctx.fillRect(x + 10, y + i, 15, 8);
+                ctx.fillRect(x + 35, y + i, 15, 8);
+                ctx.fillRect(x + 60, y + i, 15, 8);
             }
+        }
+    }
+
+    function desenharCenario() {
+        desenharPredio(280, 70, 70, 230, '#b6bdc1');
+        desenharPredio(180, 150, 60, 150, '#9da4a8');
+        desenharPredio(500, 130, 60, 170, '#a5adb1');
+        desenharPredio(650, 90, 90, 210, '#e3e6e8', true); 
+
+        const yCasas = 210;
+        desenharCasa(20, yCasas, '#d8d4a9');  
+        desenharCasa(130, yCasas, '#c996a6'); 
+        desenharCasa(240, yCasas, '#95b9cb'); 
+        desenharCasa(350, yCasas, '#a8c1a6'); 
+        desenharCasa(460, yCasas, '#a8c1a6'); 
+        desenharCasa(570, yCasas, '#e2e2e2'); 
+
+        ctx.fillStyle = '#656c71';
+        ctx.fillRect(0, 300, 800, 12);
+        ctx.fillStyle = '#555b60';
+        ctx.fillRect(0, 312, 800, 12);
+        ctx.fillStyle = '#484d51';
+        ctx.fillRect(0, 324, 800, 26);
+
+        ctx.fillStyle = '#3c5a3d';
+        ctx.fillRect(0, 350, 800, 150);
+    }
+
+    function desenharItens() {
+        ctx.fillStyle = '#7a9e68'; 
+        comidas.forEach(c => {
+            ctx.fillRect(c.x, c.y - 12, 16, 16);
         });
 
-        let capivara = {
-            x: 400,
-            y: 480,
-            escala: 1,
-            anguloPerna: 0,
-            abaixarCabeca: 0
-        };
-
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-
-    
-        function desenharCenario() {
-            // Céu 
-            ctx.fillStyle = '#329dc8';
-            ctx.fillRect(0, 0, 800, 300);
-
-            // Prédios ao fundo
-            ctx.fillStyle = '#8a949b';
-            ctx.fillRect(100, 150, 80, 150);
-            ctx.fillRect(600, 100, 100, 200);
-
-            // Casarões coloridos
-            ctx.fillStyle = '#e5c07b'; // Amarelo
-            ctx.fillRect(50, 220, 90, 80);
-            ctx.fillStyle = '#e06c75'; // Rosa
-            ctx.fillRect(140, 230, 90, 70);
-            ctx.fillStyle = '#61afef'; // Azul
-            ctx.fillRect(230, 210, 100, 90);
-            ctx.fillStyle = '#98c379'; // Verde
-            ctx.fillRect(330, 230, 90, 70);
-
-            // Grama 
-            ctx.fillStyle = '#3a5f0b';
-            ctx.fillRect(0, 300, 800, 300);
-
-            // Rio
-            ctx.fillStyle = '#2c3e50';
-            ctx.fillRect(0, 320, 800, 150);
-
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.2)'; // Esbranquiçado
-            ctx.fillRect(0, 0, 800, 600);
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; // Escurecido
-            ctx.fillRect(0, 0, 800, 600);
-        }
-
-        function desenharCapivara() {
-            ctx.save();
-            
-            ctx.translate(capivara.x, capivara.y);
-            ctx.scale(capivara.escala, capivara.escala);
-
-            const corCorpo = '#8b5a2b';
-            const corEscura = '#5c3a18';
-
-            // Corpo (Centro ajustado para os pés ficarem no y=0)
-            ctx.fillStyle = corCorpo;
-            ctx.fillRect(-60, -70, 120, 60);
-
-            // Cabeça
-            ctx.save();
-            ctx.translate(60, -60); 
-            ctx.rotate(capivara.abaixarCabeca); // Rotação da cabeça
-            ctx.fillRect(-10, -20, 50, 40);
-            // Olho
-            ctx.fillStyle = 'black';
-            ctx.fillRect(20, -10, 5, 5);
-            // Focinho
-            ctx.fillStyle = corEscura;
-            ctx.fillRect(30, 0, 10, 15);
-            ctx.restore();
-
-            // Perna Traseira (Rotação com ponto fixo)
-            ctx.save();
-            ctx.translate(-35, -10); 
-            ctx.rotate(capivara.anguloPerna); // Op
-            ctx.fillStyle = corEscura;
-            ctx.fillRect(-5, 0, 10, 20); // Desenha a partir da articulação
-            ctx.restore(); 
-            
-            // Perna Dianteira
-            ctx.save();
-            ctx.translate(35, -10);
-            ctx.rotate(-capivara.anguloPerna); // Gira invertido
-            ctx.fillStyle = corEscura;
-            ctx.fillRect(-5, 0, 10, 20);
-            ctx.restore();
-        }
-
-        function desenharItens() {
-            comidas.forEach(c => {
-                ctx.fillStyle = 'lightgreen';
-                ctx.fillRect(c.x, c.y - 15, 15, 15);
-            });
-
-            cocos.forEach(c => {
-                if (c.caindo) {
-                    c.y += 2;
-                    c.x -= 0.5; // Cai levemente para trás
-                    if (c.y >= capivara.y) {
-                        c.y = capivara.y;
-                        c.caindo = false;
-                    }
-                }
-                ctx.fillStyle = '#3e2723';
-                ctx.fillRect(c.x, c.y - 10, 10, 10);
-            });
-        }
-
-        function atualizar() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            desenharCenario();
-            desenharItens()
-            desenharCapivara();
-            andando = false;
-            if (teclas['arrowup'] || teclas['e']) {
-                capivara.x += 3;
-                andando = true;
-                // Loop de tela
-                if (capivara.x > canvas.width + 100 * capivara.escala) {
-                    capivara.x = -100;
+        ctx.fillStyle = '#3e2723'; 
+        cocos.forEach(c => {
+            if (c.caindo) {
+                c.y += 3; 
+                c.x -= 1; 
+                if (c.y >= capivara.y + (40 * capivara.escala)) {
+                    c.y = capivara.y + (40 * capivara.escala);
+                    c.caindo = false;
                 }
             }
+            ctx.fillRect(c.x, c.y - 8, 24, 10); 
+        });
+    }
 
-            if (andando) {
-                tempo += 0.2;
-                capivara.anguloPerna = Math.sin(tempo) * 0.5;
-            } else {
-                capivara.anguloPerna = 0;
-            }
+    function desenharCapivara() {
+        ctx.save();
+        
+        ctx.translate(capivara.x, capivara.y);
+        ctx.scale(capivara.escala, capivara.escala);
 
-            if (comendo) {
-                capivara.abaixarCabeca = Math.PI / 4; // Rotaciona 45 graus pra baixo
-            } else {
-                capivara.abaixarCabeca = 0;
-            }
+        const corCorpo = '#8b5a2b';
+        const corFocinho = '#5c3a18';
+
+        // Perna Traseira
+        ctx.save();
+        ctx.translate(-50, 30); 
+        ctx.rotate(capivara.anguloPerna); 
+        ctx.fillStyle = corCorpo; 
+        ctx.fillRect(-12, 0, 24, 45); 
+        ctx.restore();
+
+        // Perna Dianteira
+        ctx.save();
+        ctx.translate(50, 30); 
+        ctx.rotate(-capivara.anguloPerna);
+        ctx.fillStyle = corCorpo; 
+        ctx.fillRect(-12, 0, 24, 45);
+        ctx.restore();
+
+        // Corpo
+        ctx.fillStyle = corCorpo;
+        ctx.fillRect(-80, -50, 160, 80); 
+
+        // Cabeça
+        ctx.save();
+        ctx.translate(80, -20); 
+        ctx.rotate(capivara.abaixarCabeca);
+        
+        ctx.fillStyle = corCorpo;
+        ctx.fillRect(-10, -50, 70, 60); 
+        
+        ctx.fillStyle = 'black'; 
+        ctx.fillRect(35, -35, 8, 8); 
+        
+        ctx.fillStyle = corFocinho; 
+        ctx.fillRect(60, -5, 10, 15); 
+        
+        ctx.restore();
+        ctx.restore();
+    }
+
+    function atualizar() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        desenharCenario();
+        desenharItens();
+
+        let andandoAgora = teclas['ArrowUp'] || andarAutomatico;
+        
+        if (andandoAgora) {
+            capivara.x += 2.5;
+            tempo += 0.15;
+            capivara.anguloPerna = Math.sin(tempo) * 0.6; 
             
-            if (key === 'r') {
-                capivara.escala = 1;
-                capivara.x = 400;
-                comidas = [];
-                cocos = [];
+            if (capivara.x > canvas.width + 120 * capivara.escala) {
+                capivara.x = -150;
             }
-
-            requestAnimationFrame(atualizar);
+        } else {
+            capivara.anguloPerna = 0;
         }
 
-        atualizar();
-    </script>
+        if (comendo) {
+            capivara.abaixarCabeca = Math.PI / 4; 
+        } else {
+            capivara.abaixarCabeca = 0;
+        }
+
+        desenharCapivara();
+
+        requestAnimationFrame(atualizar);
+    }
+
+    window.focus();
+    atualizar();
+</script>
 </body>
 </html>
