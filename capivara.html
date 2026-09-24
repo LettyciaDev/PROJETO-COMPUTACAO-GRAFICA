@@ -44,9 +44,23 @@
         let teclas = {};
         let andando = false;
         let tempo = 0;
+        let comidas = [];
+        let comendo = false;
         
         window.addEventListener('keydown', (e) => teclas[e.key.toLowerCase()] = true);
         window.addEventListener('keyup', (e) => teclas[e.key.toLowerCase()] = false);
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (key === 'q' && !andando) {
+                // Gera comida na frente da capivara
+                comidas.push({ x: capivara.x + (80 * capivara.escala), y: capivara.y });
+                comendo = true;
+                setTimeout(() => comendo = false, 300);
+                
+                // Cresce limitando a um tamanho máximo
+                if(capivara.escala < 2.5) capivara.escala += 0.1;
+            }
+        });
 
         let capivara = {
             x: 400,
@@ -133,9 +147,17 @@
             ctx.restore();
         }
 
+        function desenharItens() {
+            comidas.forEach(c => {
+                ctx.fillStyle = 'lightgreen';
+                ctx.fillRect(c.x, c.y - 15, 15, 15);
+            });
+        }
+
         function atualizar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             desenharCenario();
+            desenharItens()
             desenharCapivara();
             andando = false;
             if (teclas['arrowup'] || teclas['e']) {
@@ -153,6 +175,12 @@
             } else {
                 capivara.anguloPerna = 0;
             }
+
+            if (comendo) {
+                capivara.abaixarCabeca = Math.PI / 4; // Rotaciona 45 graus pra baixo
+            } else {
+                capivara.abaixarCabeca = 0;
+            }
             requestAnimationFrame(atualizar);
         }
 
@@ -160,3 +188,9 @@
     </script>
 </body>
 </html>
+
+if (comendo) {
+        capivara.abaixarCabeca = Math.PI / 4; // Rotaciona 45 graus pra baixo
+    } else {
+        capivara.abaixarCabeca = 0;
+    }
