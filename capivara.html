@@ -41,8 +41,18 @@
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script>
+        let capivara = {
+            x: 400,
+            y: 480,
+            escala: 1,
+            anguloPerna: 0,
+            abaixarCabeca: 0
+        };
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+
     
         function desenharCenario() {
             // Céu 
@@ -73,9 +83,45 @@
             ctx.fillRect(0, 320, 800, 150);
         }
 
+        // Função de desenho (adicione antes do loop)
+        function desenharCapivara() {
+            ctx.save();
+            
+            ctx.translate(capivara.x, capivara.y);
+            ctx.scale(capivara.escala, capivara.escala);
+
+            const corCorpo = '#8b5a2b';
+            const corEscura = '#5c3a18';
+
+            // Corpo (Centro ajustado para os pés ficarem no y=0)
+            ctx.fillStyle = corCorpo;
+            ctx.fillRect(-60, -70, 120, 60);
+
+            // Cabeça
+            ctx.save();
+            ctx.translate(60, -60); 
+            ctx.rotate(capivara.abaixarCabeca); // Rotação da cabeça
+            ctx.fillRect(-10, -20, 50, 40);
+            // Olho
+            ctx.fillStyle = 'black';
+            ctx.fillRect(20, -10, 5, 5);
+            // Focinho
+            ctx.fillStyle = corEscura;
+            ctx.fillRect(30, 0, 10, 15);
+            ctx.restore();
+
+            // Pernas estáticas por enquanto
+            ctx.fillStyle = corEscura;
+            ctx.fillRect(-40, -10, 10, 20); // Traseira
+            ctx.fillRect(30, -10, 10, 20);  // Dianteira
+
+            ctx.restore();
+        }
+
         function atualizar() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             desenharCenario();
+            desenharCapivara();
             requestAnimationFrame(atualizar);
         }
 
