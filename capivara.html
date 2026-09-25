@@ -17,11 +17,8 @@
         }
         #gameContainer {
             position: relative;
-            /* Configuração responsiva: ocupa 90% da altura da tela */
             height: 90vh;
-            /* Mantém a exata proporção original para nada ficar achatado */
             aspect-ratio: 8 / 5;
-            /* Limita pela largura caso a tela seja muito estreita */
             max-width: 95vw;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
             border-radius: 8px;
@@ -32,7 +29,6 @@
             width: 100%;
             height: 100%;
             background-color: #7b8b91; 
-            /* Garante que ao aumentar a tela, os blocos continuem nítidos */
             image-rendering: pixelated;
         }
         #ui-panel {
@@ -85,7 +81,6 @@
         <div class="instruction"><span class="key">W</span> Fazer Cocô (Diminui)</div>
         <div class="instruction"><span class="key">R</span> Limpar Tudo & Resetar Escala</div>
     </div>
-    <!-- A resolução interna continua 800x500 para a matemática das transformações funcionar perfeitamente, o CSS cuida de esticar visualmente -->
     <canvas id="gameCanvas" width="800" height="500"></canvas>
 </div>
 
@@ -251,7 +246,7 @@
         ctx.fillStyle = corCorpo;
         ctx.fillRect(-80, -50, 160, 80); 
 
-        // Cabeça
+        // Cabeca
         ctx.save();
         ctx.translate(80, -20); 
         ctx.rotate(capivara.abaixarCabeca);
