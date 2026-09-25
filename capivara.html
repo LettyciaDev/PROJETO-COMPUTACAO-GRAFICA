@@ -173,16 +173,19 @@
     }
 
     function desenharCenario() {
+        ctx.fillStyle = '#1ca6ed';
+        ctx.fillRect(0, 0, 800, 300);
+
         desenharPredio(280, 70, 70, 230, '#b6bdc1');
         desenharPredio(180, 150, 60, 150, '#9da4a8');
         desenharPredio(500, 130, 60, 170, '#a5adb1');
         desenharPredio(650, 90, 90, 210, '#e3e6e8', true); 
 
         const yCasas = 210;
-        desenharCasa(20, yCasas, '#d8d4a9');  
+        desenharCasa(20, yCasas, '#f7e259');  
         desenharCasa(130, yCasas, '#c996a6'); 
         desenharCasa(240, yCasas, '#95b9cb'); 
-        desenharCasa(350, yCasas, '#a8c1a6'); 
+        desenharCasa(350, yCasas, '#ed5b54'); 
         desenharCasa(460, yCasas, '#a8c1a6'); 
         desenharCasa(570, yCasas, '#e2e2e2'); 
 
@@ -193,12 +196,12 @@
         ctx.fillStyle = '#484d51';
         ctx.fillRect(0, 324, 800, 26);
 
-        ctx.fillStyle = '#3c5a3d';
+        ctx.fillStyle = '#5cad5f';
         ctx.fillRect(0, 350, 800, 150);
     }
 
     function desenharItens() {
-        ctx.fillStyle = '#7a9e68'; 
+        ctx.fillStyle = '#42804a'; 
         comidas.forEach(c => {
             ctx.fillRect(c.x, c.y - 12, 16, 16);
         });
@@ -225,8 +228,9 @@
 
         const corCorpo = '#8b5a2b';
         const corFocinho = '#5c3a18';
+        const corDetalhes = '#331e0b';
 
-        // Perna Traseira
+        // Perna Traseira 
         ctx.save();
         ctx.translate(-50, 30); 
         ctx.rotate(capivara.anguloPerna); 
@@ -234,7 +238,7 @@
         ctx.fillRect(-12, 0, 24, 45); 
         ctx.restore();
 
-        // Perna Dianteira
+        // Perna Dianteira 
         ctx.save();
         ctx.translate(50, 30); 
         ctx.rotate(-capivara.anguloPerna);
@@ -242,23 +246,40 @@
         ctx.fillRect(-12, 0, 24, 45);
         ctx.restore();
 
-        // Corpo
+        // Corpo 
         ctx.fillStyle = corCorpo;
         ctx.fillRect(-80, -50, 160, 80); 
 
-        // Cabeca
+        // Cabeça e Detalhes
         ctx.save();
         ctx.translate(80, -20); 
         ctx.rotate(capivara.abaixarCabeca);
         
+        // Base da Cabeça
         ctx.fillStyle = corCorpo;
         ctx.fillRect(-10, -50, 70, 60); 
+
+        // Orelha
+        ctx.fillStyle = corFocinho;
+        ctx.beginPath();
+        ctx.ellipse(-2, -48, 6, 9, -Math.PI / 6, 0, Math.PI * 2);
+        ctx.fill();
         
-        ctx.fillStyle = 'black'; 
-        ctx.fillRect(35, -35, 8, 8); 
-        
+        // Focinho
         ctx.fillStyle = corFocinho; 
-        ctx.fillRect(60, -5, 10, 15); 
+        ctx.fillRect(60, -15, 10, 25); 
+        
+        // Olho
+        ctx.fillStyle = corDetalhes;
+        ctx.beginPath();
+        ctx.arc(35, -30, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Brilho no Olho
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(37, -32, 1.8, 0, Math.PI * 2);
+        ctx.fill();
         
         ctx.restore();
         ctx.restore();
